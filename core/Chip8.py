@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 
+import random
+
 class Chip8(object):
+    """Specification here:
+        https://en.wikipedia.org/wiki/CHIP-8#Virtual_machine_description
+    """
+
     fontset = [
     0xF0, 0x90, 0x90, 0x90, 0xF0, #0
     0x20, 0x60, 0x20, 0x20, 0x70, #1
@@ -74,8 +80,57 @@ class Chip8(object):
         # Decode opcode
         operation = self.instruction & 0xF000
 
-        if operation == 0xA000:
+        if operation == 0x8000: # 0x8XY* operations
+            subop = self.opcode & 0x000F
+            VX = self.opcode & 0x0F00
+            VY = self.opcode & 0x00F0
+            if subop == 0x0000: # 0x8XY0
+                # VX = VY
+            elif subop == 0x0001: # 0x8XY1
+            self.registers[VX] = self.registers[VY]
+                # VX = VX | VY
+                self.registers[VX] = self.registers[VX] | self.registers[VY]
+            elif subop == 0x0002: # 0x8XY2
+                # VX = VX & VY
+                self.registers[VX] = self.registers[VX] & self.registers[VY]
+            elif subop == 0x0003: # 0x8XY3
+                # VX = VX ^ VY
+                self.registers[VX] = self.registers[VX] ^ self.registers[VY]
+            elif subop == 0x0004: # 0x8XY4
+                # VX += VY
+                self.registers[VX] += self.registers[VY]
+            elif subop == 0x0005: # 0x8XY5
+                # VX -= VY
+                self.registers[VX] -= self.registers[VY]
+            elif subop == 0x0006: # 0x8XY6
+                # VX = VY = VY >> 1
+                # Shifts VY right by one and stores the result to VX (VY remains unchanged).
+                # VF is set to the value of the least significant bit of VY before the shift.
+                self.registers[-1] = self.registers[VY] & 0x0001
+                self.registers[VX] = self.registers[VY] >> 1
+            elif subop == 0x0007: # 0x8XY7
+                # VX = VY - VX
+                self.registers[VX] = self.registers[VY] - self.registers[VX]
+            elif subop == 0x000E: # 0x8XYE
+                # VX = VY = VY << 1
+                # Shifts VY left by one and copies the result to VX.
+                # VF is set to the value of the most significant bit of VY before the shift.
+                self.registers[-1] = (self.registers[VY] & 0x8000) >> 15
+                self.registers[VX] = self.registers[VY] << 1
+            self.pc += 2
+        elif operation == 0xA000: # 0xANNN
+            # Set value of I to NNN
             self.I = self.opcode & 0x0FFF
+            self.pc += 2
+        elif operation == 0xB000: # 0xBNNN
+            # Jump to V0+NNN
+            address = self.opcode & 0x0FFF
+            self.pc = self.registers[0] + address
+        elif operation == 0xC000: # 0xCXNN
+            # Set VX to rand() & NN
+            targetReg = self.opcode & 0x0F00
+            value = self.opcode & 0x00FF
+            registers[targetReg] = random.randint(0.255) & value
             self.pc += 2
         else:
             print("Unknown opcode: " + str(operation))
