@@ -3,7 +3,8 @@
 import random
 
 class Chip8(object):
-    """Specification here:
+    """
+        Specification here:
         https://en.wikipedia.org/wiki/CHIP-8#Virtual_machine_description
     """
 
