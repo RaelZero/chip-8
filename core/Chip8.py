@@ -86,8 +86,8 @@ class Chip8(object):
             VY = self.opcode & 0x00F0
             if subop == 0x0000: # 0x8XY0
                 # VX = VY
+                self.registers[VX] = self.registers[VY]
             elif subop == 0x0001: # 0x8XY1
-            self.registers[VX] = self.registers[VY]
                 # VX = VX | VY
                 self.registers[VX] = self.registers[VX] | self.registers[VY]
             elif subop == 0x0002: # 0x8XY2
