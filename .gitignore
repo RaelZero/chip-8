@@ -5,3 +5,6 @@ lib/
 lib64
 pyvenv.cfg
 *.pyc
+
+# Ignore the ROM
+pong.rom
