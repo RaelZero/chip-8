@@ -92,8 +92,8 @@ class Chip8(object):
 
         if operation == 0x8000: # 0x8XY* operations
             subop = self.opcode & 0x000F
-            VX = self.opcode & 0x0F00
-            VY = self.opcode & 0x00F0
+            VX = (self.opcode & 0x0F00) >> 8
+            VY = (self.opcode & 0x00F0) >> 4
             if subop == 0x0000: # 0x8XY0
                 # VX = VY
                 self.registers[VX] = self.registers[VY]
@@ -138,7 +138,7 @@ class Chip8(object):
             self.pc = self.registers[0] + address
         elif operation == 0xC000: # 0xCXNN
             # Set VX to rand() & NN
-            targetReg = self.opcode & 0x0F00
+            targetReg = (self.opcode & 0x0F00) >> 8
             value = self.opcode & 0x00FF
             registers[targetReg] = random.randint(0.255) & value
             self.pc += 2
