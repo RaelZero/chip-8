@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import random
+import os
 
 class Chip8(object):
     """
@@ -74,6 +75,14 @@ class Chip8(object):
         except OSError:
             raise
 
+    def beep(self):
+        duration = .1  # second
+        freq = 2200  # Hz
+        os.system('play --no-show-progress --null --channels 1 synth %s sine %f' % (duration, freq))
+
+    def draw(self):
+        pass
+
     def runCycle(self):
         # Fetch current opcode
         self.opcode = (self.memory[self.pc] << 8) | self.memory[self.pc + 1]
@@ -143,6 +152,3 @@ class Chip8(object):
             if soundTimer == 1:
                 self.beep()
             soundTimer -= 1
-
-    def beep(self):
-        print("Beep!")
