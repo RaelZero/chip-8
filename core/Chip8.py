@@ -95,11 +95,13 @@ class Chip8(object):
         os.system('play --no-show-progress --null --channels 1 synth %s sine %f' % (duration, freq))
 
     def draw(self):
-        surface = pygame.Surface((255, 255))
+        width = self.screenSize[0]
+        height = self.screenSize[1]
 
+        surface = pygame.Surface((width, height))
         pixels = pygame.PixelArray(surface)
 
-        creen = pygame.display.get_surface()
+        screen = pygame.display.get_surface()
         screen.fill((255, 255, 255))
         screen.blit(surface, (0, 0))
 
@@ -166,6 +168,16 @@ class Chip8(object):
             value = self.opcode & 0x00FF
             registers[targetReg] = random.randint(0.255) & value
             self.pc += 2
+        elif operation == 0xD000: # 0xDXYN
+            # Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels. Each row of 8 pixels is read as bit-coded starting from memory location I; I value doesn’t change after the execution of this instruction. As described above, VF is set to 1 if any screen pixels are flipped from set to unset when the sprite is drawn, and to 0 if that doesn’t happen
+
+            # Extract
+            xCoord = (self.opcode & 0x0F00) >> 8
+            yCoord = (self.opcode & 0x00F0) >> 4
+            character = (self.opcode & 0x000F)
+
+            self.draw(xCoord, yCoord, character)
+            pass
         else:
             print("Unknown opcode: " + str(operation))
 
@@ -178,15 +190,13 @@ class Chip8(object):
             soundTimer -= 1
 
     def initGFX(self):
-        pygame.init()
-
         width = self.screenSize[0]
         height = self.screenSize[1]
 
+        pygame.init()
+
         pygame.display.set_mode((width, height))
-
         surface = pygame.Surface((width, height))
-
         pixels = pygame.PixelArray(surface)
 
         for y in range(height):
@@ -196,7 +206,6 @@ class Chip8(object):
 
         screen = pygame.display.get_surface()
         screen.blit(surface, (0, 0))
-
         pygame.display.flip()
 
         return
