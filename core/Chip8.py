@@ -2,6 +2,7 @@
 
 import random
 import os
+import pygame
 
 class Chip8(object):
     """
@@ -59,6 +60,9 @@ class Chip8(object):
         # Initialize timers
         self.delayTimer = 0
         self.soundTimer = 0
+
+        # Initialize display window
+        self.window = self.initWindow()
 
     # Load ROM passed via name parameter to memory
     def loadProgram(self, name):
@@ -152,3 +156,31 @@ class Chip8(object):
             if soundTimer == 1:
                 self.beep()
             soundTimer -= 1
+
+    def initWindow(self):
+        pygame.init()
+
+        pygame.display.set_mode((255, 255))
+        surface = pygame.Surface((255, 255))
+
+        pixels = pygame.PixelArray(surface)
+
+        for y in range(255):
+            pixels[:,y] = (0, 0, 0)
+        del(pixels)
+
+        screen = pygame.display.get_surface()
+        screen.fill((255, 255, 255))
+        screen.blit(surface, (0, 0))
+
+        pygame.display.flip()
+
+        return
+
+    def run(self):
+        while 1:
+            event = pygame.event.wait()
+            if event.type == pygame.QUIT:
+                raise SystemExit
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                break
