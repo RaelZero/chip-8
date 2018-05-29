@@ -61,8 +61,18 @@ class Chip8(object):
         self.delayTimer = 0
         self.soundTimer = 0
 
-        # Initialize display window
-        self.window = self.initWindow()
+        # Initialize screen size
+        # CHIP-8 Display is 64x32 - here it is upscaled with each CHIP-8 pixel becoming an 8x8 emulator screen pixel
+        screenWidth = 64
+        screenHeight = 32
+        screenScaling = 8
+
+        self.screenSize = (
+            screenWidth * screenScaling,
+            screenHeight * screenScaling
+        )
+
+        return
 
     # Load ROM passed via name parameter to memory
     def loadProgram(self, name):
@@ -85,7 +95,17 @@ class Chip8(object):
         os.system('play --no-show-progress --null --channels 1 synth %s sine %f' % (duration, freq))
 
     def draw(self):
-        pass
+        surface = pygame.Surface((255, 255))
+
+        pixels = pygame.PixelArray(surface)
+
+        creen = pygame.display.get_surface()
+        screen.fill((255, 255, 255))
+        screen.blit(surface, (0, 0))
+
+        pygame.display.flip()
+
+        return
 
     def runCycle(self):
         # Fetch current opcode
@@ -157,20 +177,24 @@ class Chip8(object):
                 self.beep()
             soundTimer -= 1
 
-    def initWindow(self):
+    def initGFX(self):
         pygame.init()
 
-        pygame.display.set_mode((255, 255))
-        surface = pygame.Surface((255, 255))
+        width = self.screenSize[0]
+        height = self.screenSize[1]
+
+        pygame.display.set_mode((width, height))
+
+        surface = pygame.Surface((width, height))
 
         pixels = pygame.PixelArray(surface)
 
-        for y in range(255):
-            pixels[:,y] = (0, 0, 0)
+        for y in range(height):
+            r, g, b = y, y, y
+            pixels[:,y] = (r, g, b)
         del(pixels)
 
         screen = pygame.display.get_surface()
-        screen.fill((255, 255, 255))
         screen.blit(surface, (0, 0))
 
         pygame.display.flip()
@@ -178,9 +202,10 @@ class Chip8(object):
         return
 
     def run(self):
+        self.initGFX()
+
         while 1:
             event = pygame.event.wait()
             if event.type == pygame.QUIT:
+                print("Quitting...")
                 raise SystemExit
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                break
