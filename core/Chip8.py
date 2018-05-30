@@ -47,9 +47,6 @@ class Chip8(object):
         self.stack = [0] * 16
         self.sp = 0
 
-        # Clean screen
-        self.screen = [[0] * 64] * 32
-
         # Initialize keypad
         self.key = [0] * 16
 
@@ -61,18 +58,22 @@ class Chip8(object):
         self.delayTimer = 0
         self.soundTimer = 0
 
-        # Initialize screen size
-        # CHIP-8 Display is 64x32 - here it is upscaled with each CHIP-8 pixel becoming an 8x8 emulator screen pixel
+        # Initialize screen and screen size
+        # CHIP-8 Display is 64x32 - here it will be upscaled with each CHIP-8 pixel becoming an 8x8 emulator screen pixel
         screenWidth = 64
         screenHeight = 32
         screenScaling = 8
 
         self.screenSize = (
             screenWidth * screenScaling,
-            screenHeight * screenScaling
+            screenHeight * screenScaling,
+            screenScaling
         )
 
-        return
+        # Clean screen
+        self.screen = [0] * screenWidth * screenHeight
+
+        self.drawFlag = False
 
     # Load ROM passed via name parameter to memory
     def loadProgram(self, name):
@@ -94,20 +95,63 @@ class Chip8(object):
         freq = 2200  # Hz
         os.system('play --no-show-progress --null --channels 1 synth %s sine %f' % (duration, freq))
 
-    def draw(self):
+    def initGFX(self):
         width = self.screenSize[0]
         height = self.screenSize[1]
 
-        surface = pygame.Surface((width, height))
-        pixels = pygame.PixelArray(surface)
+        pygame.init()
+
+        pygame.display.set_mode((width, height))
+        startingFrame = pygame.Surface((width, height))
+        pixels = pygame.PixelArray(startingFrame)
+
+        for y in range(height):
+            r, g, b = y, y, y
+            pixels[:,y] = (r, g, b)
+        del(pixels)
 
         screen = pygame.display.get_surface()
-        screen.fill((255, 255, 255))
-        screen.blit(surface, (0, 0))
+        screen.blit(startingFrame, (0, 0))
+        pygame.display.flip()
+
+    def draw(self):
+        if self.drawFlag:
+            self.drawFlag = False
+        width = self.screenSize[0]
+        height = self.screenSize[1]
+
+        nextFrame = pygame.Surface((width, height))
+        pixels = pygame.PixelArray(nextFrame)
+
+        window = pygame.display.get_surface()
+        window.blit(nextFrame, (0, 0))
 
         pygame.display.flip()
 
-        return
+    # Scale the screen state contained in self.screen to the window size
+    # Return the PixelArray for the new frame
+    def upscale(self):
+        width = self.screenSize[0]
+        height = self.screenSize[1]
+        scalingFactor = self.screenSize[2]
+
+        reshapeScreen = lambda flatScreen, width: [flatScreen[i:i+width] for i in range(0, len(flatScreen), width)]
+
+        screenMatrix = reshapeScreen(self.screen, 64)
+
+        upscaled = pygame.Surface((width, height))
+        pixels = pygame.PixelArray(upscaled)
+
+        #todo actual upscaling
+
+        return upscaled
+
+[0, 1]
+[1, 0]
+
+[0, 0, 1, 1]
+[0, 0, 1, 1]
+[1, 1, 0, 0]
 
     def runCycle(self):
         # Fetch current opcode
@@ -116,6 +160,7 @@ class Chip8(object):
         # Decode opcode
         operation = self.instruction & 0xF000
 
+        # Execute opcode
         if operation == 0x8000: # 0x8XY* operations
             subop = self.opcode & 0x000F
             VX = (self.opcode & 0x0F00) >> 8
@@ -171,13 +216,22 @@ class Chip8(object):
         elif operation == 0xD000: # 0xDXYN
             # Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels. Each row of 8 pixels is read as bit-coded starting from memory location I; I value doesn’t change after the execution of this instruction. As described above, VF is set to 1 if any screen pixels are flipped from set to unset when the sprite is drawn, and to 0 if that doesn’t happen
 
-            # Extract
+            # Raise the draw flag
+            self.drawFlag = True
+
+            # Extract x, y and height
             xCoord = (self.opcode & 0x0F00) >> 8
             yCoord = (self.opcode & 0x00F0) >> 4
-            character = (self.opcode & 0x000F)
+            height = (self.opcode & 0x000F)
 
-            self.draw(xCoord, yCoord, character)
-            pass
+            self.registers[0xF] = 0
+
+            for yLine in range(height):
+                pixel = self.memory[self.I + yLine]
+                for xLine in range(8):
+                    if ((pixel & (0x80 >> xLine)) != 0):
+                        pass
+
         else:
             print("Unknown opcode: " + str(operation))
 
@@ -189,32 +243,13 @@ class Chip8(object):
                 self.beep()
             soundTimer -= 1
 
-    def initGFX(self):
-        width = self.screenSize[0]
-        height = self.screenSize[1]
-
-        pygame.init()
-
-        pygame.display.set_mode((width, height))
-        surface = pygame.Surface((width, height))
-        pixels = pygame.PixelArray(surface)
-
-        for y in range(height):
-            r, g, b = y, y, y
-            pixels[:,y] = (r, g, b)
-        del(pixels)
-
-        screen = pygame.display.get_surface()
-        screen.blit(surface, (0, 0))
-        pygame.display.flip()
-
-        return
-
     def run(self):
         self.initGFX()
 
         while 1:
             event = pygame.event.wait()
+            if self.drawFlag:
+                self.draw()
             if event.type == pygame.QUIT:
                 print("Quitting...")
                 raise SystemExit
