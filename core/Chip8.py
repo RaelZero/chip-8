@@ -90,11 +90,13 @@ class Chip8(object):
         except OSError:
             raise
 
+    # Beep for 0.1 seconds through the `play` command
     def beep(self):
         duration = .1  # second
         freq = 2200  # Hz
         os.system('play --no-show-progress --null --channels 1 synth %s sine %f' % (duration, freq))
 
+    # Initialize the Pygame window that will be used for the emulator
     def initGFX(self):
         width = self.screenSize[0]
         height = self.screenSize[1]
@@ -105,6 +107,7 @@ class Chip8(object):
         startingFrame = pygame.Surface((width, height))
         pixels = pygame.PixelArray(startingFrame)
 
+        # Draw a gradient effect
         for y in range(height):
             r, g, b = y, y, y
             pixels[:,y] = (r, g, b)
@@ -114,23 +117,27 @@ class Chip8(object):
         screen.blit(startingFrame, (0, 0))
         pygame.display.flip()
 
+    # Draw the current screen buffer on the emulator window
+    # Called if the drawFlag is up at the beginning fo a cycle
     def draw(self):
-        if self.drawFlag:
-            self.drawFlag = False
         width = self.screenSize[0]
         height = self.screenSize[1]
 
-        nextFrame = pygame.Surface((width, height))
-        pixels = pygame.PixelArray(nextFrame)
+        # Reset the draw flag
+        if self.drawFlag:
+            self.drawFlag = False
 
+        # Upscale screen
+        nextFrame = upscaleCurrentScreen()
+
+        # Apply it to the window
         window = pygame.display.get_surface()
         window.blit(nextFrame, (0, 0))
-
         pygame.display.flip()
 
     # Scale the screen state contained in self.screen to the window size
     # Return the PixelArray for the new frame
-    def upscale(self):
+    def upscaleCurrentScreen(self):
         width = self.screenSize[0]
         height = self.screenSize[1]
         scalingFactor = self.screenSize[2]
@@ -232,10 +239,12 @@ class Chip8(object):
 
             self.registers[0xF] = 0
 
+            # Draw the pixels on the screen
             for yLine in range(height):
                 pixel = self.memory[self.I + yLine]
                 for xLine in range(8):
                     if ((pixel & (0x80 >> xLine)) != 0):
+                        #todo finish implementing screen drawing
                         pass
 
         else:
