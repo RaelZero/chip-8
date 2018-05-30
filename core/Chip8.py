@@ -135,16 +135,29 @@ class Chip8(object):
         height = self.screenSize[1]
         scalingFactor = self.screenSize[2]
 
-        reshapeScreen = lambda flatScreen, width: [flatScreen[i:i+width] for i in range(0, len(flatScreen), width)]
+        # Reshape the screen list into a screen matrix
+        reshape = lambda flat, width: [flat[i:i+width] for i in range(0, len(flat), width)]
+        screenMatrix = reshape(self.screen, 64)
 
-        screenMatrix = reshapeScreen(self.screen, 64)
+        # Upscale the screen matrix by a factor of scalingFactor
+        enlargedMatrix = []
+        for row in screenMatrix:
+            expandedRow = []
+            for c in row:
+                for i in range(scalingFactor):
+                    expandedRow.append(c)
+            for i in range(scalingFactor):
+                enlargedMatrix.append(expandedRow)
 
-        upscaled = pygame.Surface((width, height))
-        pixels = pygame.PixelArray(upscaled)
+        # Copy the enlarged matrix into a pygame surface
+        upscaledFrame = pygame.Surface((width, height))
+        pixels = pygame.PixelArray(upscaledFrame)
 
-        #todo actual upscaling
+        for row in enlargedMatrix:
+            for col in row:
+                pixels[row, col] = enlargedMatrix[r][c]
 
-        return upscaled
+        return upscaledFrame
 
     def runCycle(self):
         # Fetch current opcode
