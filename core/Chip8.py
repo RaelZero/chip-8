@@ -146,13 +146,6 @@ class Chip8(object):
 
         return upscaled
 
-[0, 1]
-[1, 0]
-
-[0, 0, 1, 1]
-[0, 0, 1, 1]
-[1, 1, 0, 0]
-
     def runCycle(self):
         # Fetch current opcode
         self.opcode = (self.memory[self.pc] << 8) | self.memory[self.pc + 1]
