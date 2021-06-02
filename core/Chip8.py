@@ -96,6 +96,9 @@ class Chip8(object):
         freq = 2200  # Hz
         os.system('play --no-show-progress --null --channels 1 synth %s sine %f' % (duration, freq))
 
+    def setKeys(self):
+        pass
+
     # Initialize the Pygame window that will be used for the emulator
     def initGFX(self):
         width = self.screenSize[0]
@@ -262,9 +265,16 @@ class Chip8(object):
         self.initGFX()
 
         while 1:
-            event = pygame.event.wait()
+            #todo check that this event cycle actually works
+            self.runCycle()
+
             if self.drawFlag:
                 self.draw()
+
+            self.setKeys()
+
+            # Exit event
+            event = pygame.event.wait()
             if event.type == pygame.QUIT:
                 print("Quitting...")
                 raise SystemExit
